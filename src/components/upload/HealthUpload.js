@@ -11,15 +11,22 @@ export default function HealthUpload({ user }) {
     setStatus('Processing file...');
     try {
       const zip = await JSZip.loadAsync(file);
-      const xml = await zip.file('export.xml')?.async('string');
 
-      if (!xml) {
+        // Fix: Dynamically find export.xml path
+        const exportXmlPath = Object.keys(zip.files).find(
+        (path) => path.toLowerCase().endsWith('export.xml')
+        );
+
+        if (!exportXmlPath) {
         setStatus('❌ export.xml not found in ZIP file.');
         return;
-      }
+        }
 
-      const parser = new XMLParser({ ignoreAttributes: false });
-      const parsed = parser.parse(xml);
+        const xmlString = await zip.file(exportXmlPath)?.async('string');
+
+        const parser = new XMLParser({ ignoreAttributes: false });
+        const parsed = parser.parse(xmlString);
+
       const records = parsed.HealthData?.Record ?? [];
 
       const steps = records
